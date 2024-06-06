@@ -28,6 +28,10 @@ const userSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    userimage:{
+      type: String,
+      required: false,
+    },
     cart: [
       {
         productId: {

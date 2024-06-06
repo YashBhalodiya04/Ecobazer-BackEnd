@@ -12,6 +12,7 @@ const createProduct = asyncHandler(async (req, res) => {
   const { name, description, category, stock, price } = req.body;
 
   const image = req?.files[0]?.path;
+  // console.log(req);
 
   if (!image) {
     return res.status(400).json({ error: "Please upload an image" });

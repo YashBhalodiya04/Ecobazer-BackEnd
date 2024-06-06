@@ -95,8 +95,79 @@ const userProfile = asyncHandler(async (req, res) => {
   });
 });
 
-// @API "/api/user/updatebillingaddress"
+// @API "/api/user/updatepassword"
+const UpdatePassword = asyncHandler(async (req, res) => {
+  const userFound = await User.findById(req.userAuthId);
+  if (!userFound) {
+    throw new Error("User not found");
+  }
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  const { currentpassword, newPassword, confirmPassword } = req.body;
+  // console.log(currentpassword, newPassword,confirmPassword);
+  if (newPassword !== confirmPassword) {
+    return res.status(400).json({ error: "Passwords do not match" });
+  }
+  const isMatch = await bcrypt.compare(currentpassword, userFound?.password);
+  if (!isMatch) {
+    return res.status(400).json({ error: "Sorry wrong password" });
+  }
+  const salt = await bcrypt.genSalt(10);
+  const hashedPassword = await bcrypt.hash(newPassword, salt);
+  const user = await User.findByIdAndUpdate(
+    req.userAuthId,
+    {
+      password: hashedPassword,
+    },
+    {
+      new: true,
+    }
+  ).lean();
+  res.status(200).json({
+    status: "success",
+    message: "Password updated successfully",
+    user,
+  });
+});
 
+// @API "/api/user/updateprofile"
+const updateProfile = asyncHandler(async (req, res) => {
+  const userFound = await User.findById(req.userAuthId);
+  if (!userFound) {
+    throw new Error("User not found");
+  }
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  const { firstname, lastname, phone, email } = req.body;
+
+
+  const image = req?.file ? req.file.path : userFound?.userimage;
+  const user = await User.findByIdAndUpdate(
+    req.userAuthId,
+    {
+      firstName: firstname,
+      lastName: lastname,
+      phone: phone,
+      email: email,
+      userimage: image,
+    },
+    {
+      new: true,
+    }
+  ).lean();
+
+  res.status(200).json({
+    status: "success",
+    message: "User profile fetched",
+    user,
+  });
+});
+
+// @API "/api/user/updatebillingaddress"
 const updateBillingAddress = asyncHandler(async (req, res) => {
   const userFound = await User.findById(req.userAuthId);
 
@@ -143,4 +214,11 @@ const updateBillingAddress = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = { createUser, userLogin, userProfile, updateBillingAddress };
+module.exports = {
+  createUser,
+  userLogin,
+  userProfile,
+  updateBillingAddress,
+  UpdatePassword,
+  updateProfile
+};
